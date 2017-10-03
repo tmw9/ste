@@ -1,16 +1,4 @@
-typedef struct gap_buffer {
-    char *start;
-    char *cursor_ptr;
-    char *gap_end_ptr;
-    char *end_ptr;
-    int capacity;
-    int len;
-} gap_buffer;
-
-typedef struct list_of_buffers {
-    gap_buffer row_buffer;
-    gap_buffer *prev, *next;
-} ebuffer;
+#include "ebuffer.h"
 
 void init_buffer(ebuffer *buff) {
     buff = (ebuffer *) (malloc(sizeof(ebuffer)));

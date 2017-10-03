@@ -14,7 +14,7 @@ WINDOW *create_newwin(int height, int width, int startx, int starty) {
 }
 
 void destroy_mywin(WINDOW *local_win) {
-    wborder(local_win, ' ', ' ', ' ',' ',' ',' ',' ',' ');
+    // wborder(local_win, ' ', ' ', ' ',' ',' ',' ',' ',' ');
     wrefresh(local_win);
     delwin(local_win);
 }
