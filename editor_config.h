@@ -1,4 +1,4 @@
-
+#include <ncurses.h>
 
 typedef struct editor_config {
     int cursor_x;   //cursor's x co ordinate
@@ -7,3 +7,5 @@ typedef struct editor_config {
     int screen_col; //max number of columns that can be displayed on screen
     int no_rows; //number of rows
 } editor_config;
+
+void set_cursor(editor_config *ec, WINDOW *win, int x, int y);

@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include "editor_config.h"
 
+editor_config ec;
+
 WINDOW *create_newwin(int height, int width, int startx, int starty) {
     WINDOW *local_win;
     local_win = newwin(height, width, starty, startx);
@@ -20,7 +22,6 @@ void destroy_mywin(WINDOW *local_win) {
 }
 
 WINDOW *init_editor(const char *filename) {
-    editor_config ec;
     ec.cursor_x = 0;
     ec.cursor_y = 0;
     ec.screen_row = 0;
@@ -59,13 +60,23 @@ WINDOW *init_editor(const char *filename) {
 
 int main(int argc, char const *argv[])
 {
+    char inp = 0;
     if(argc != 2) {
         printf("Usage : ./main <filename>\n");
         return -1;
     }
     WINDOW *win;
     win = init_editor(argv[1]);
-    exit_editor(win);
-
+    set_cursor(&ec, win, 0, 0);
+    refresh();
+    while((inp = getch()) != '\032') {
+        if(inp == 27) {
+            char type = getch(), key = getch();
+            printw("%d\n", key);
+        }
+        mvprintw(ec.cursor_y, ec.cursor_x++, "%c", inp);
+    }
+    delwin(win);
+    endwin();
     return 0;
 }

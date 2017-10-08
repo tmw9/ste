@@ -1,3 +1,5 @@
 link.txt
 main
 main2
+*.o
+a.out
