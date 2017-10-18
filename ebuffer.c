@@ -1,9 +1,29 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "ebuffer.h"
 
-void init_buffer(gap_buffer *gb) {
-    gb -> buffer_size = 2048;
+void copy_file_to_buffer(FILE *file, gap_buffer *gb) {
+
+    // determine the size of the file then create
+    // a buffer of size + GAP_SIZE
+    struct stat buf;
+
+    fstat(fileno(file), &buf);
+    long file_size = buf.st_size;
+    init_buffer(gb, file_size + 2048);
+    move_gap_to_point(gb);
+    expand_gap(gb, (int)file_size );
+    unsigned int amount = fread(gb -> gap_start, 1, file_size, file);
+    gb -> gap_start += amount;
+};
+
+
+void init_buffer(gap_buffer *gb, unsigned long size) {
+    gb -> buffer_size = size;
+    // printf("%lld\n", size);
     gb -> buffer = (char *) malloc(sizeof(char) * (gb -> buffer_size));
     if(!(gb -> buffer))
         return;
@@ -19,7 +39,7 @@ void add_char(gap_buffer *gb, char ch) {
         move_gap_to_point(gb);
 
     if(gb -> gap_start == gb -> gap_end || gb -> gap_capacity == 0) {
-        expand_gap(gb);
+        expand_gap(gb, 1);
         gb -> gap_capacity = gb -> buffer_size;
     }
 
@@ -29,17 +49,17 @@ void add_char(gap_buffer *gb, char ch) {
     --(gb -> gap_capacity);
 }
 
-void expand_gap(gap_buffer *gb) {
-    expand_buffer(gb);
+void expand_gap(gap_buffer *gb, unsigned long size) {
+    expand_buffer(gb, size);
     copy_chars_to_gap(gb, gb -> gap_end + gb -> buffer_size, gb -> gap_end, gb -> buffer_end - gb -> gap_end);
-    gb -> gap_end += gb -> buffer_size;
-    gb -> buffer_end += gb -> buffer_size;
+    gb -> gap_end += size;
+    gb -> buffer_end += size;
 }
 
-void expand_buffer(gap_buffer *gb) {
+void expand_buffer(gap_buffer *gb, unsigned long size) {
 
     char *original_buffer = gb -> buffer;
-    int new_buffer_size = gb -> buffer_size * 2;
+    int new_buffer_size = gb -> buffer_size + 1;
     gb -> buffer = (char *) realloc(gb -> buffer, new_buffer_size);
 
     gb -> cursor_ptr += gb -> buffer - original_buffer;
@@ -112,16 +132,28 @@ void delete_char(gap_buffer *gb) {
 void print_buffer(gap_buffer *gb) {
     char *temp = gb -> buffer;
 
-
     while (temp < gb -> buffer_end) {
 
         if ( (temp >= gb -> gap_start) && (temp < gb -> gap_end) ) {
             printf("_");
             temp++;
         } else {
-            printf("%c\n", *(temp++));
+            printf("%c", *(temp++));
         }
 
     }
     printf("\n");
+}
+
+void save_buffer_to_file(FILE *file, gap_buffer *gb) {
+    char *temp = gb -> buffer;
+    while(*temp) {
+        if(temp == gb -> gap_start)
+            temp = gb -> gap_end;
+        fwrite(temp, 1, 1, file);
+        temp++;
+        if(temp == gb -> buffer_end)
+            break;
+    }
+    free(gb -> buffer);
 }
