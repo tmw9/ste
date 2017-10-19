@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include "ebuffer.h"
 
-void copy_file_to_buffer(FILE *file, gap_buffer *gb) {
+void copy_file_to_buffer(gap_buffer *gb, FILE *file) {
 
     // determine the size of the file then create
     // a buffer of size + GAP_SIZE

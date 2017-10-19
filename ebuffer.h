@@ -10,7 +10,7 @@ typedef struct gap_buffer {
     unsigned long long gap_capacity;
 } gap_buffer;
 
-void copy_file_to_buffer(FILE *file, gap_buffer *gb);
+void copy_file_to_buffer(gap_buffer *gb, FILE *file);
 
 void init_buffer(gap_buffer *gb, unsigned long size);
 

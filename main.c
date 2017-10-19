@@ -4,13 +4,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "editor_config.h"
+#include "ebuffer.h"
 
-editor_config ec;
 
 WINDOW *create_newwin(int height, int width, int startx, int starty) {
     WINDOW *local_win;
     local_win = newwin(height, width, starty, startx);
-    // box(local_win, 0, 0);
     wrefresh(local_win);
     return local_win;
 }
@@ -21,60 +20,58 @@ void destroy_mywin(WINDOW *local_win) {
     delwin(local_win);
 }
 
-WINDOW *init_editor(const char *filename) {
-    ec.cursor_x = 0;
-    ec.cursor_y = 0;
-    ec.screen_row = 0;
-    ec.screen_col = 0;
-    ec.no_rows = 1;
+
+
+WINDOW *init_editor(editor_config *ec, WINDOW *win) {
+    char ch;
+    int startx, starty;
     initscr();
     cbreak();
-    // noecho();
-    getmaxyx(stdscr, ec.screen_row, ec.screen_col);
     // mvprintw(row/2,(col-strlen(mesg))/2,"%s",mesg);
     // mvprintw(row - 2, 0, "this screen has %d rows and %d columns", row, col);
-    WINDOW *win;
-    int startx, starty;
+    // WINDOW *win;
     startx = starty = 0;
     // char c;
     noecho();
-    win = create_newwin(ec.screen_row - 2, ec.screen_col, startx, starty);
+    win = create_newwin(get_screen_row(ec) - 2, get_screen_col(ec), startx, starty);
     keypad(win, TRUE);
-    int fd = open(filename, O_RDONLY);
-    char ch;
-    while(read(fd, &ch, 1) != 0) {
-        mvprintw(ec.cursor_y, ec.cursor_x, "%c", ch);
-        // printw("%c", ch);
-        if(ch == 10){
-            ec.cursor_x = 0;
-            ec.cursor_y++;
-        }
-        else
-            ec.cursor_x++;
-    }
-    refresh();
-    close(fd);
-    return win;
+    wrefresh(win);
 }
 
 
 int main(int argc, char const *argv[])
 {
     char inp = 0;
+    WINDOW *win;
+    gap_buffer gb;
+    editor_config ec;
+    FILE *fp;
     if(argc != 2) {
         printf("Usage : ./main <filename>\n");
         return -1;
     }
-    WINDOW *win;
-    win = init_editor(argv[1]);
+    fp = fopen(argv[1], "r");
+    init_editor(&ec, win);
+    copy_file_to_buffer(&gb, fp);
+    print_buffer(&gb);
+    fclose(fp); //close the file currently, will open when writing/
     set_cursor(&ec, win, 0, 0);
     refresh();
     while((inp = getch()) != '\032') {
         if(inp == 27) {
             char type = getch(), key = getch();
-            printw("%d\n", key);
+            if(key == 66) {
+                move_cursor_down(&ec);
+                wrefresh(win);
+            }
+            if(key == 65) {
+                move_cursor_up(&ec);
+            }
         }
-        mvprintw(ec.cursor_y, ec.cursor_x++, "%c", inp);
+        else{
+            mvprintw(get_cursor_y(&ec), get_cursor_x(&ec), "%c", inp);
+            move_cursor_right(&ec);
+        }
     }
     delwin(win);
     endwin();
