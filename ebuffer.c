@@ -13,7 +13,7 @@ void copy_file_to_buffer(FILE *file, gap_buffer *gb) {
 
     fstat(fileno(file), &buf);
     long file_size = buf.st_size;
-    init_buffer(gb, file_size + 2048);
+    init_buffer(gb, file_size + 256);
     move_gap_to_point(gb);
     expand_gap(gb, (int)file_size );
     unsigned int amount = fread(gb -> gap_start, 1, file_size, file);
@@ -31,29 +31,39 @@ void init_buffer(gap_buffer *gb, unsigned long size) {
     gb -> gap_start = gb -> buffer;
     gb -> gap_end = gb -> buffer + gb -> buffer_size;
     gb -> buffer_end = gb -> gap_end;
-    gb -> gap_capacity = gb -> buffer_size;
+}
+
+long size_of_buffer(gap_buffer *gb) {
+    return (gb -> buffer_end - gb -> buffer) - (gb -> gap_end - gb -> gap_end);
 }
 
 void add_char(gap_buffer *gb, char ch) {
+
+    //if gap is not at cursor_ptr then move the gap to cursor
     if(gb -> cursor_ptr != gb -> gap_start)
         move_gap_to_point(gb);
 
-    if(gb -> gap_start == gb -> gap_end || gb -> gap_capacity == 0) {
+    //if gap is empty then expand gap
+    if(gb -> gap_start == gb -> gap_end) {
         expand_gap(gb, 1);
-        gb -> gap_capacity = gb -> buffer_size;
+        // gb -> gap_capacity = gb -> buffer_size;
     }
 
+    //insert char
     *(gb -> gap_start) = ch;
-    ++(gb -> gap_start);
-    ++(gb -> cursor_ptr);
-    --(gb -> gap_capacity);
+    ++(gb -> gap_start);    //increment gap pointer
+    ++(gb -> cursor_ptr);   //increment cursor pointer
 }
 
 void expand_gap(gap_buffer *gb, unsigned long size) {
-    expand_buffer(gb, size);
+    if(size <= size_of_gap(gb))
+        return;
+    gb -> buffer_size += 128;
+    expand_buffer(gb, gb -> buffer_size);
     copy_chars_to_gap(gb, gb -> gap_end + gb -> buffer_size, gb -> gap_end, gb -> buffer_end - gb -> gap_end);
     gb -> gap_end += size;
     gb -> buffer_end += size;
+    printf("GAP EXPANDED\n");
 }
 
 void expand_buffer(gap_buffer *gb, unsigned long size) {
@@ -66,6 +76,7 @@ void expand_buffer(gap_buffer *gb, unsigned long size) {
     gb -> buffer_end += gb -> buffer - original_buffer;
     gb -> gap_start += gb -> buffer - original_buffer;
     gb -> gap_end += gb -> buffer - original_buffer;
+    printf("BUFFER EXPANDED\n");
 }
 
 void copy_chars_to_gap(gap_buffer *gb, char *destination, char * source, long length) {
@@ -83,26 +94,31 @@ void copy_chars_to_gap(gap_buffer *gb, char *destination, char * source, long le
         destination += length;
 
         for(; length > 0; length--){
-            *(--destination) == *(--source);
+            *(destination--) == *(source--);
         }
     }
 }
 
 void move_gap_to_point(gap_buffer *gb) {
 
-    if(gb -> cursor_ptr == gb -> gap_start)
+    if(gb -> cursor_ptr == gb -> gap_start) {
+        printf("Inside first if\n");
         return;
+    }
     else if(gb -> cursor_ptr == gb -> gap_end) {
         gb -> cursor_ptr = gb -> gap_start;
+        printf("Inside second if\n");
         return;
     }
 
     if(gb -> cursor_ptr < gb -> gap_start) {
-         copy_chars_to_gap(gb, gb -> cursor_ptr + (gb -> gap_end - gb -> gap_start), gb -> cursor_ptr, gb ->gap_start - gb -> cursor_ptr);
-         gb -> gap_end -= (gb -> gap_start - gb -> cursor_ptr);
-         gb -> gap_start = gb -> cursor_ptr;
+        printf("Inisde Third if\n");
+        copy_chars_to_gap(gb, gb -> cursor_ptr + (gb -> gap_end - gb -> gap_start), gb -> cursor_ptr, gb ->gap_start - gb -> cursor_ptr);
+        gb -> gap_end -= (gb -> gap_start - gb -> cursor_ptr);
+        gb -> gap_start = gb -> cursor_ptr;
     }
     else {
+        printf("Inisde 4th if\n");
         copy_chars_to_gap(gb, gb -> gap_start, gb -> gap_end, gb -> cursor_ptr - gb -> gap_end);
         gb -> gap_start += gb -> cursor_ptr - gb -> gap_end;
         gb -> gap_end = gb -> cursor_ptr;
@@ -130,6 +146,11 @@ void delete_char(gap_buffer *gb) {
 }
 
 void print_buffer(gap_buffer *gb) {
+
+    gb -> cursor_ptr = gb -> buffer + 5;
+    // printf("INSIDE PRINT\n\n\n\n\n\n");
+    move_gap_to_point(gb);
+
     char *temp = gb -> buffer;
 
     while (temp < gb -> buffer_end) {
@@ -147,6 +168,7 @@ void print_buffer(gap_buffer *gb) {
 
 void save_buffer_to_file(FILE *file, gap_buffer *gb) {
     char *temp = gb -> buffer;
+    // printf("NPOTHING : %c\n", *(gb -> gap_end - 25));
     while(*temp) {
         if(temp == gb -> gap_start)
             temp = gb -> gap_end;

@@ -35,3 +35,7 @@ void delete_char(gap_buffer *gb);
 void print_buffer(gap_buffer *gb);
 
 void save_buffer_to_file(FILE *file, gap_buffer *gb);
+
+long size_of_gap(gap_buffer *gb);
+
+long int size_of_buffer(gap_buffer *gb);
