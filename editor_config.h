@@ -1,3 +1,6 @@
+#ifndef EDITOR_CONFIG
+
+#define EDITOR_CONFIG
 
 typedef struct editor_config {
     int cursor_x;   //cursor's x co ordinate
@@ -18,5 +21,8 @@ void move_cursor_left(editor_config *ec);
 void move_cursor_right(editor_config *ec);
 void move_cursor_up(editor_config *ec);
 void move_cursor_down(editor_config *ec);
+void enter_new_line(editor_config *ec);
 int get_cursor_x(editor_config *ec);
 int get_cursor_y(editor_config *ec);
+
+#endif

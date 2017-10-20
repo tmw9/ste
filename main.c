@@ -3,8 +3,8 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "editor_config.h"
 #include "ebuffer.h"
+#include "editor_config.h"
 
 
 WINDOW *create_newwin(int height, int width, int startx, int starty) {
@@ -28,7 +28,7 @@ WINDOW *init_editor(editor_config *ec, WINDOW *win) {
     initscr();
     cbreak();
     // mvprintw(row/2,(col-strlen(mesg))/2,"%s",mesg);
-    // mvprintw(row - 2, 0, "this screen has %d rows and %d columns", row, col);
+    // mvprintw(10 - 2, 0, "this screen has %d rows and %d columns", 10, 10);
     // WINDOW *win;
     startx = starty = 0;
     // char c;
@@ -53,10 +53,10 @@ int main(int argc, char const *argv[])
     fp = fopen(argv[1], "r");
     init_editor(&ec, win);
     copy_file_to_buffer(&gb, fp);
-    print_buffer(&gb);
+    print_buffer(&gb, &ec, win);
     fclose(fp); //close the file currently, will open when writing/
     set_cursor(&ec, win, 0, 0);
-    refresh();
+    wrefresh(win);
     while((inp = getch()) != '\032') {
         if(inp == 27) {
             char type = getch(), key = getch();
@@ -69,7 +69,7 @@ int main(int argc, char const *argv[])
             }
         }
         else{
-            mvprintw(get_cursor_y(&ec), get_cursor_x(&ec), "%c", inp);
+            mvwprintw(win, get_cursor_y(&ec), get_cursor_x(&ec), "%c", inp);
             move_cursor_right(&ec);
         }
     }

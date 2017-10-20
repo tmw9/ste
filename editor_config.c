@@ -64,3 +64,8 @@ int get_cursor_x(editor_config *ec) {
 int get_cursor_y(editor_config *ec) {
     return ec -> cursor_y;
 }
+
+void enter_new_line(editor_config *ec) {
+    ec -> cursor_x = 0;
+    (ec -> cursor_y)++;
+}

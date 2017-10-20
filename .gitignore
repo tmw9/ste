@@ -3,3 +3,7 @@ main
 main2
 *.o
 a.out
+test
+test_buffer.c
+test_op
+temp
