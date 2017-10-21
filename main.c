@@ -85,16 +85,15 @@ int main(int argc, char const *argv[])
         } else if(inp == 127) {
             delete_char(&gb);
             move_cursor_left(&ec);
+            move(get_cursor_y(&ec), get_cursor_x(&ec));
         } else if(inp == 10) {
             add_char(&gb, inp);
             move_cursor_down_start(&ec);
         } else if(inp == 23) {
-            // fp2 = fopen("test_op", "w");
             char ans = 0;
             clear();
             print_buffer(&gb);
             want_to_save(win, &ec);
-            // printw("HERE I AM\n");
             ans = getch();
             while(1) {
                 if(ans == 'y' || ans == 'Y' || ans == 'n' || ans == 'N')
@@ -109,6 +108,21 @@ int main(int argc, char const *argv[])
             endwin();
             fclose(fp);
             return 1;
+        } else if(inp == 2) {
+            char ans;
+            clear();
+            print_buffer(&gb);
+            want_to_save(win, &ec);
+            ans = getch();
+            while(1) {
+                if(ans == 'y' || ans == 'Y' || ans == 'n' || ans == 'N')
+                    break;
+                ans = getch();
+            }
+            printw("%c", ans);
+            if(ans == 'y' || ans == 'Y')
+                save_buffer_to_file(&gb, fp);
+            move(get_cursor_y(&ec), get_cursor_x(&ec));
         }
 
         else {

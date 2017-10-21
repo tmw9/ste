@@ -136,7 +136,7 @@ void save_buffer_to_file(gap_buffer *gb, FILE *file) {
 }
 
 void delete_char(gap_buffer *gb) {
-    (gb -> cursor_ptr)--;
+    // (gb -> cursor_ptr)--;
     (gb -> gap_start)--;
 }
 
@@ -187,10 +187,12 @@ void move_gap_cursor_up(gap_buffer *gb, int x) {
 }
 
 void move_gap_cursor_down(gap_buffer *gb, int x) {
-    char *temp = gb -> cursor_ptr;
-    while(move_gap_cursor_right(gb) == 1) {
+    char *temp = gb -> cursor_ptr + x;
+    // printw("TT");
+    while(*temp != '\n') {
         ++temp;
     }
-    gb -> cursor_ptr = temp + x;
-    printw("HERE\n");
+    ++temp;
+    gb -> cursor_ptr += (temp - gb -> cursor_ptr) + x;
+    // printw("HERE\n");
 }

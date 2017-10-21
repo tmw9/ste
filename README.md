@@ -1,8 +1,5 @@
 This is a simple terminal based text editor named ste(simple text editor)
-
 It has the following features:
-
-
 1. Find.
 2. Find & Replace.
 3. Saving files.
