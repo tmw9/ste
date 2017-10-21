@@ -17,33 +17,23 @@ typedef struct gap_buffer {
 } gap_buffer;
 
 void copy_file_to_buffer(gap_buffer *gb, FILE *file);
-
 void init_buffer(gap_buffer *gb, unsigned long size);
-
 void add_char(gap_buffer *gb, char ch) ;
-
 void expand_buffer(gap_buffer *gb, unsigned long size);
-
 void expand_gap(gap_buffer *gb, unsigned long size);
-
 void move_chars_to_gap(gap_buffer *gb, char *destination, char *source, unsigned int length);
-
 void move_gap_to_point(gap_buffer *gb);
-
 unsigned long size_of_gap(gap_buffer *gb);
-
-// char get_char(gap_buffer *gb);
-
-// void delete_char(gap_buffer *gb);
-
-// void print_buffer(gap_buffer *gb, editor_config *ec, WINDOW *win);
-
 void print_buffer(gap_buffer *gb);
-
 void save_buffer_to_file(gap_buffer *gb, FILE *file);
-
 unsigned long size_of_gap(gap_buffer *gb);
-
 unsigned long size_of_buffer(gap_buffer *gb);
+void delete_char(gap_buffer *gb);
+char get_next_char(gap_buffer *gb);
+char get_prev_char(gap_buffer *gb);
+int move_gap_cursor_right(gap_buffer *gb);
+int move_gap_cursor_left(gap_buffer *gb);
+void move_gap_cursor_up(gap_buffer *gb, int x);
+void move_gap_cursor_down(gap_buffer *gb, int x);
 
 #endif

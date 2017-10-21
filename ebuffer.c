@@ -106,13 +106,11 @@ void move_chars_to_gap(gap_buffer *gb, char *destination, char *source, unsigned
 void print_buffer(gap_buffer *gb) {
     char *temp = gb -> buffer;
     while (temp < gb -> buffer_end) {
-        if (temp >= gb -> gap_start && temp < gb -> gap_end)
-            printf("_");
-         else
-            printf("%c",*(temp));
+        if (temp < gb -> gap_start || temp >= gb -> gap_end)
+            printw("%c",*(temp));
         ++temp;
     }
-    printf("\n");
+    printw("\n");
 }
 
 void add_char(gap_buffer *gb, char ch) {
@@ -122,6 +120,7 @@ void add_char(gap_buffer *gb, char ch) {
         expand_gap(gb, 1);
     *(gb -> gap_start) = ch;
     (gb -> gap_start)++;
+    (gb -> cursor_ptr)++;
 }
 
 void save_buffer_to_file(gap_buffer *gb, FILE *file) {
@@ -131,5 +130,74 @@ void save_buffer_to_file(gap_buffer *gb, FILE *file) {
             temp = gb -> gap_end;
         fputc(*temp, file);
         temp++;
+    }
+}
+
+void delete_char(gap_buffer *gb) {
+    (gb -> cursor_ptr)--;
+    (gb -> gap_start)--;
+}
+
+char get_next_char(gap_buffer *gb) {
+    return *(gb -> cursor_ptr + 1);
+}
+
+char get_prev_char(gap_buffer *gb) {
+    return *(gb -> cursor_ptr - 1);
+}
+
+int move_gap_cursor_right(gap_buffer *gb) {
+    char *temp = gb -> cursor_ptr + 1;
+    if(*temp == '\n' || *temp == '\0')
+        return 2;
+    if(temp >= gb -> gap_start && temp < gb -> gap_end) {
+        temp = gb -> gap_end;
+        gb -> cursor_ptr = gb -> gap_end;
+        return 1;
+    }
+    gb -> cursor_ptr = temp;
+    return 1;
+}
+
+int move_gap_cursor_left(gap_buffer *gb) {
+    char *temp = gb -> cursor_ptr - 1;
+    if(gb -> cursor_ptr == gb -> buffer || *temp == '\n')
+        return 2;
+    if(temp >= gb -> gap_start && temp < gb -> gap_end) {
+        temp = gb -> gap_start - 1;
+        gb -> cursor_ptr = gb -> gap_start - 1;
+        return 1;
+    }
+    gb -> cursor_ptr = temp;
+    return 1;
+}
+
+void move_gap_cursor_up(gap_buffer *gb, int x) {
+    char *temp = gb -> cursor_ptr;
+    while(*temp != '\n')
+        --temp;
+    --temp;
+    while(temp != gb -> buffer || *temp != '\n')
+        --temp;
+    gb -> cursor_ptr = temp;
+    while(x--) {
+        gb -> cursor_ptr += 1;
+        if(*(gb -> cursor_ptr + 1) == '\n')
+            break;
+    }
+}
+
+void move_gap_cursor_down(gap_buffer *gb, int x) {
+    char *temp = gb -> cursor_ptr;
+    while(temp != gb -> buffer_end || *temp != '\n') {
+        ++temp;
+    }
+    if(gb -> buffer_end == temp)
+        return;
+    ++temp;
+    while(x--) {
+        gb -> cursor_ptr += 1;
+        if(*(gb -> cursor_ptr + 1) == '\n' || gb -> cursor_ptr + 1 == gb -> buffer_end)
+            break;
     }
 }
