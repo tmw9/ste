@@ -48,12 +48,14 @@ int main(int argc, char const *argv[])
         printf("Usage : ./main <filename>\n");
         return -1;
     }
-    fp = fopen(argv[1], "r");
+    fp = fopen(argv[1], "r+");
     init_editor(&ec, &win);
+    init_editor_config(&ec, win);
     copy_file_to_buffer(&gb, fp);
     print_buffer(&gb);
-    fclose(fp); //close the file currently, will open when writing/
+    // fclose(fp); //close the file currently, will open when writing/
     set_cursor(&ec, &win, 0, 0);
+    move(0, 0);
     wrefresh(win);
     while((inp = getch()) != '\032') {
         if(inp == 27) {
@@ -86,7 +88,29 @@ int main(int argc, char const *argv[])
         } else if(inp == 10) {
             add_char(&gb, inp);
             move_cursor_down_start(&ec);
+        } else if(inp == 23) {
+            // fp2 = fopen("test_op", "w");
+            char ans = 0;
+            clear();
+            print_buffer(&gb);
+            want_to_save(win, &ec);
+            // printw("HERE I AM\n");
+            ans = getch();
+            while(1) {
+                if(ans == 'y' || ans == 'Y' || ans == 'n' || ans == 'N')
+                    break;
+                ans = getch();
+            }
+            printw("%c", ans);
+            if(ans == 'y' || ans == 'Y')
+                save_buffer_to_file(&gb, fp);
+            getch();
+            delwin(win);
+            endwin();
+            fclose(fp);
+            return 1;
         }
+
         else {
             add_char(&gb, inp);
             move_gap_cursor_right(&gb);
@@ -94,12 +118,13 @@ int main(int argc, char const *argv[])
         }
         clear();
         print_buffer(&gb);
+        print_option_bar(win, &ec);
         move(get_cursor_y(&ec), get_cursor_x(&ec));
         wrefresh(win);
         refresh();
 
     }
-    delwin(win);
-    endwin();
+    // delwin(win);
+    // endwin();
     return 0;
 }

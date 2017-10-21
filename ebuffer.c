@@ -125,10 +125,12 @@ void add_char(gap_buffer *gb, char ch) {
 
 void save_buffer_to_file(gap_buffer *gb, FILE *file) {
     char *temp = gb -> buffer;
+    // fseek(file, 0, SEEK_SET);
+    rewind(file);
     while(*temp) {
         if(temp == gb -> gap_start)
             temp = gb -> gap_end;
-        fputc(*temp, file);
+        fwrite(temp, 1, 1, file);
         temp++;
     }
 }
@@ -176,9 +178,6 @@ void move_gap_cursor_up(gap_buffer *gb, int x) {
     char *temp = gb -> cursor_ptr;
     while(*temp != '\n')
         --temp;
-    --temp;
-    while(temp != gb -> buffer || *temp != '\n')
-        --temp;
     gb -> cursor_ptr = temp;
     while(x--) {
         gb -> cursor_ptr += 1;
@@ -189,15 +188,9 @@ void move_gap_cursor_up(gap_buffer *gb, int x) {
 
 void move_gap_cursor_down(gap_buffer *gb, int x) {
     char *temp = gb -> cursor_ptr;
-    while(temp != gb -> buffer_end || *temp != '\n') {
+    while(move_gap_cursor_right(gb) == 1) {
         ++temp;
     }
-    if(gb -> buffer_end == temp)
-        return;
-    ++temp;
-    while(x--) {
-        gb -> cursor_ptr += 1;
-        if(*(gb -> cursor_ptr + 1) == '\n' || gb -> cursor_ptr + 1 == gb -> buffer_end)
-            break;
-    }
+    gb -> cursor_ptr = temp + x;
+    printw("HERE\n");
 }

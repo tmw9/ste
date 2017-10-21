@@ -1,6 +1,7 @@
 #ifndef EDITOR_CONFIG
 
 #define EDITOR_CONFIG
+#include <ncurses.h>
 
 typedef struct editor_config {
     int cursor_x;   //cursor's x co ordinate
@@ -11,10 +12,10 @@ typedef struct editor_config {
 } editor_config;
 
 void set_cursor(editor_config *ec, WINDOW **win, int x, int y);
-// void print_at_cursor(editor_config *ec, char ch);
+void print_option_bar(WINDOW *win, editor_config *ec);
 int get_screen_row(editor_config *ec);
 int get_screen_col(editor_config *ec);
-void init_editor_config(editor_config *ec);
+void init_editor_config(editor_config *ec, WINDOW *win);
 int get_screen_row(editor_config *ec);
 int get_screen_col(editor_config *ec);
 void move_cursor_left(editor_config *ec);
@@ -26,5 +27,6 @@ void move_cursor_up_start(editor_config *ec);
 int get_cursor_x(editor_config *ec);
 int get_cursor_y(editor_config *ec);
 int get_cursor_row(editor_config *ec);
+void want_to_save(WINDOW *win, editor_config *ec);
 
 #endif
