@@ -56,13 +56,16 @@ void move_cursor_right(editor_config *ec) {
     refresh();
 }
 
-void move_cursor_up(editor_config *ec) {
+void move_cursor_up(editor_config *ec, int x) {
     (ec -> cursor_y)--;
+    (ec -> cursor_x) -= x;
     refresh();
 }
 
-void move_cursor_down(editor_config *ec) {
+void move_cursor_down(editor_config *ec, int x) {
     (ec -> cursor_y)++;
+    if(x != 0)
+        (ec -> cursor_x) -= x + 1;
     refresh();
 }
 

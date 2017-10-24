@@ -53,7 +53,6 @@ int main(int argc, char const *argv[])
     init_editor_config(&ec, win);
     copy_file_to_buffer(&gb, fp);
     print_buffer(&gb);
-    // fclose(fp); //close the file currently, will open when writing/
     set_cursor(&ec, &win, 0, 0);
     move(0, 0);
     wrefresh(win);
@@ -61,16 +60,16 @@ int main(int argc, char const *argv[])
         if(inp == 27) {
             char type = getch(), key = getch();
             if(key == 66) {
-                getyx(win, local_y, local_x);
-                move_gap_cursor_down(&gb, local_x);
-                move_cursor_down(&ec);
+                getyx(stdscr, local_y, local_x);
+                temp = move_gap_cursor_down(&gb, local_y, local_x);
+                move_cursor_down(&ec, temp);
             }
             if(key == 65) {
-                getyx(win, local_y, local_x);
+                getyx(stdscr, local_y, local_x);
                 if(local_y == 0)
                     continue;
-                move_gap_cursor_up(&gb, local_x);
-                move_cursor_up(&ec);
+                temp = move_gap_cursor_up(&gb, local_x);
+                move_cursor_up(&ec, temp);
             }
             if(key == 67) {
                 valid = move_gap_cursor_right(&gb);

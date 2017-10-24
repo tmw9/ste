@@ -59,8 +59,7 @@ void expand_gap(gap_buffer *gb, unsigned long size) {
     if (size > size_of_gap(gb)) {
         size += 128;
         expand_buffer(gb, size);
-        move_chars_to_gap(gb, gb -> gap_end + size, gb -> gap_end, gb -> buffer_end - gb -> gap_end);
-
+        move_chars_to_gap(gb, gb -> gap_end + size, gb -> gap_end - 1, gb -> buffer_end - gb -> gap_end - 1);
         gb -> gap_end += size;
         gb -> buffer_end += size;
     }
@@ -106,6 +105,8 @@ void move_chars_to_gap(gap_buffer *gb, char *destination, char *source, unsigned
 void print_buffer(gap_buffer *gb) {
     char *temp = gb -> buffer;
     while (temp < gb -> buffer_end) {
+        // if(temp >= gb -> gap_start && temp < gb -> gap_end)
+        //     printw("_");
         if (temp < gb -> gap_start || temp >= gb -> gap_end)
             printw("%c",*(temp));
         ++temp;
@@ -158,6 +159,7 @@ int move_gap_cursor_right(gap_buffer *gb) {
         return 1;
     }
     gb -> cursor_ptr = temp;
+    // move_gap_to_point(gb);
     return 1;
 }
 
@@ -165,34 +167,44 @@ int move_gap_cursor_left(gap_buffer *gb) {
     char *temp = gb -> cursor_ptr - 1;
     if(gb -> cursor_ptr == gb -> buffer || *temp == '\n')
         return 2;
+    // move_gap_to_point(gb);
     if(temp >= gb -> gap_start && temp < gb -> gap_end) {
         temp = gb -> gap_start - 1;
         gb -> cursor_ptr = gb -> gap_start - 1;
         return 1;
     }
     gb -> cursor_ptr = temp;
+    // move_gap_to_point(gb);
     return 1;
 }
 
-void move_gap_cursor_up(gap_buffer *gb, int x) {
+int move_gap_cursor_up(gap_buffer *gb, int x) {
     char *temp = gb -> cursor_ptr;
+    while(gb -> cursor_ptr != gb -> buffer && *temp != '\n')
+        --temp;
+    --temp;
     while(*temp != '\n')
         --temp;
-    gb -> cursor_ptr = temp;
-    while(x--) {
-        gb -> cursor_ptr += 1;
-        if(*(gb -> cursor_ptr + 1) == '\n')
-            break;
+    while(*(gb -> cursor_ptr) != '\n' && x--) {
+        ++(gb -> cursor_ptr);
     }
+    // gb -> cursor_ptr = temp;
+    return x;
 }
 
-void move_gap_cursor_down(gap_buffer *gb, int x) {
-    char *temp = gb -> cursor_ptr + x;
-    // printw("TT");
-    while(*temp != '\n') {
+int move_gap_cursor_down(gap_buffer *gb, int y, int x) {
+    char *temp = gb -> cursor_ptr;
+    while(temp != gb -> buffer_end && *temp != '\n')
         ++temp;
+    if(temp == gb -> buffer_end) {
+        gb -> cursor_ptr = temp;
+        return 0;
     }
     ++temp;
-    gb -> cursor_ptr += (temp - gb -> cursor_ptr) + x;
+    gb -> cursor_ptr = temp;
+    while(*(gb -> cursor_ptr) != '\n' && x--) {
+        ++(gb -> cursor_ptr);
+    }
+    return x;
     // printw("HERE\n");
 }

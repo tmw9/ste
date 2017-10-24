@@ -33,7 +33,7 @@ char get_next_char(gap_buffer *gb);
 char get_prev_char(gap_buffer *gb);
 int move_gap_cursor_right(gap_buffer *gb);
 int move_gap_cursor_left(gap_buffer *gb);
-void move_gap_cursor_up(gap_buffer *gb, int x);
-void move_gap_cursor_down(gap_buffer *gb, int x);
+int move_gap_cursor_up(gap_buffer *gb, int x);
+int move_gap_cursor_down(gap_buffer *gb, int y, int x);
 
 #endif
