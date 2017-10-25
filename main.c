@@ -62,7 +62,8 @@ int main(int argc, char const *argv[])
             if(key == 66) {
                 getyx(stdscr, local_y, local_x);
                 temp = move_gap_cursor_down(&gb, local_y, local_x);
-                move_cursor_down(&ec, temp);
+                if(temp)
+                    move_cursor_down(&ec, temp);
             }
             if(key == 65) {
                 getyx(stdscr, local_y, local_x);
@@ -82,9 +83,13 @@ int main(int argc, char const *argv[])
                     move_cursor_left(&ec);
             }
         } else if(inp == 127) {
-            delete_char(&gb);
-            move_cursor_left(&ec);
-            move(get_cursor_y(&ec), get_cursor_x(&ec));
+            int local_x, local_y;
+            getyx(stdscr, local_y, local_x);
+            if(local_x != 0) {
+                delete_char(&gb);
+                move_cursor_left(&ec);
+                move(get_cursor_y(&ec), get_cursor_x(&ec));
+            }
         } else if(inp == 10) {
             add_char(&gb, inp);
             move_cursor_down_start(&ec);
@@ -122,9 +127,9 @@ int main(int argc, char const *argv[])
             if(ans == 'y' || ans == 'Y')
                 save_buffer_to_file(&gb, fp);
             move(get_cursor_y(&ec), get_cursor_x(&ec));
-        }
-
-        else {
+        } else if(inp == 12) {
+            copy_line(&gb);
+        } else {
             add_char(&gb, inp);
             move_gap_cursor_right(&gb);
             move_cursor_right(&ec);

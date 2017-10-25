@@ -13,7 +13,7 @@ typedef struct gap_buffer {
     char *buffer_end;                   // first location outside buffer
     char *gap_start;                 // start of gap
     char *gap_end;
-
+    char copy_buffer[5000];
 } gap_buffer;
 
 void copy_file_to_buffer(gap_buffer *gb, FILE *file);
@@ -35,5 +35,6 @@ int move_gap_cursor_right(gap_buffer *gb);
 int move_gap_cursor_left(gap_buffer *gb);
 int move_gap_cursor_up(gap_buffer *gb, int x);
 int move_gap_cursor_down(gap_buffer *gb, int y, int x);
+void copy_line(gap_buffer *gb);
 
 #endif

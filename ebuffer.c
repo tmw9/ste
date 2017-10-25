@@ -105,8 +105,8 @@ void move_chars_to_gap(gap_buffer *gb, char *destination, char *source, unsigned
 void print_buffer(gap_buffer *gb) {
     char *temp = gb -> buffer;
     while (temp < gb -> buffer_end) {
-        // if(temp >= gb -> gap_start && temp < gb -> gap_end)
-        //     printw("_");
+        if(temp >= gb -> gap_start && temp < gb -> gap_end)
+            printw("_");
         if (temp < gb -> gap_start || temp >= gb -> gap_end)
             printw("%c",*(temp));
         ++temp;
@@ -146,6 +146,8 @@ char get_next_char(gap_buffer *gb) {
 }
 
 char get_prev_char(gap_buffer *gb) {
+    if(gb -> cursor_ptr - 1 == gb -> buffer)
+        return '\n';
     return *(gb -> cursor_ptr - 1);
 }
 
@@ -196,8 +198,7 @@ int move_gap_cursor_down(gap_buffer *gb, int y, int x) {
     char *temp = gb -> cursor_ptr;
     while(temp != gb -> buffer_end && *temp != '\n')
         ++temp;
-    if(temp == gb -> buffer_end) {
-        gb -> cursor_ptr = temp;
+    if(temp + 1 == gb -> buffer_end) {
         return 0;
     }
     ++temp;
@@ -207,4 +208,14 @@ int move_gap_cursor_down(gap_buffer *gb, int y, int x) {
     }
     return x;
     // printw("HERE\n");
+}
+
+void copy_line(gap_buffer *gb) {
+    char *temp = gb -> cursor_ptr;
+    while(*temp != '\n')
+        ++temp;
+    gb -> cursor_ptr = temp - 1;
+    while(*(gb -> gap_start) != '\n') {
+        delete_char(gb);
+    }
 }

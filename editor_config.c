@@ -22,8 +22,8 @@ void init_editor_config(editor_config *ec, WINDOW *win) {
 }
 
 void print_option_bar(WINDOW *win, editor_config *ec) {
-    mvaddstr(ec -> screen_row + 1, 0, "CTRL + B : SAVE          CTRL + F : FIND          CTRL + L : COPY           CTRL + U : PASTE");
-    mvaddstr(ec -> screen_row + 2, 0, "CTRL + X : CUT           CTRL + H : REPLACE       CTRL + W : QUIT");
+    mvaddstr(ec -> screen_row + 1, 0, "CTRL + B : SAVE         CTRL + F : FIND         CTRL + L : COPY          CTRL + U : PASTE");
+    mvaddstr(ec -> screen_row + 2, 0, "CTRL + X : CUT          CTRL + H : REPLACE      CTRL + W : QUIT");
     move(ec -> cursor_y, ec -> cursor_x);
     wrefresh(win);
     refresh();
@@ -86,3 +86,4 @@ void move_cursor_up_start(editor_config *ec) {
     ec -> cursor_x = 0;
     (ec -> cursor_y)--;
 }
+
