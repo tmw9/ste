@@ -6,41 +6,27 @@
 #include "ebuffer.h"
 #include "editor_config.h"
 
-
-WINDOW *create_newwin(int height, int width, int startx, int starty) {
-    WINDOW *local_win;
-    local_win = newwin(height, width, starty, startx);
-    wrefresh(local_win);
-    return local_win;
-}
-
-void destroy_mywin(WINDOW *local_win) {
-    wrefresh(local_win);
-    delwin(local_win);
-}
+#define KEYUP 65
+#define KEYDOWN 66
+#define KEYRIGHT 67
+#define KEYLEFT 68
 
 
-
-void init_editor(editor_config *ec, WINDOW **win) {
-    char ch;
-    int startx, starty;
+void init_editor() {
     initscr();
     cbreak();
-    // WINDOW *win;
-    startx = starty = 0;;
     noecho();
-    *win = create_newwin(get_screen_row(ec) - 2, get_screen_col(ec), startx, starty);
-    keypad(*win, TRUE);
-    wrefresh(*win);
+    keypad(stdscr, TRUE);
+    wrefresh(stdscr);
     refresh();
 }
 
 
 int main(int argc, char const *argv[])
 {
-    char inp = 0, next_char = 0, local_x, local_y;
-    WINDOW *win;
-    gap_buffer gb;
+    char inp = 0, next_char = 0;
+    int local_x, local_y;
+    ebuffer eb;
     editor_config ec;
     FILE *fp;
     int temp = 0, valid = 0;
@@ -49,96 +35,30 @@ int main(int argc, char const *argv[])
         return -1;
     }
     fp = fopen(argv[1], "r+");
-    init_editor(&ec, &win);
-    init_editor_config(&ec, win);
-    copy_file_to_buffer(&gb, fp);
-    print_buffer(&gb);
-    set_cursor(&ec, &win, 0, 0);
+    init_editor();
+    init_editor_config(&ec);
+    init_buffer(&eb, fp);
+    print_ebuffer(&eb);
     move(0, 0);
-    wrefresh(win);
+    wrefresh(stdscr);
     while((inp = getch()) != '\032') {
-        if(inp == 27) {
-            char type = getch(), key = getch();
-            if(key == 66) {
-                getyx(stdscr, local_y, local_x);
-                temp = move_gap_cursor_down(&gb, local_y, local_x);
-                if(temp)
-                    move_cursor_down(&ec, temp);
-            }
-            if(key == 65) {
-                getyx(stdscr, local_y, local_x);
-                if(local_y == 0)
-                    continue;
-                temp = move_gap_cursor_up(&gb, local_x);
-                move_cursor_up(&ec, temp);
-            }
-            if(key == 67) {
-                valid = move_gap_cursor_right(&gb);
-                if(valid == 1)
+        if(inp == 'a') {
+            // char type = getch(), key = getch();
+            // if(key == KEYRIGHT) {
+                temp = move_buffer_cursor_right(&eb);
+                if(temp != 0)
                     move_cursor_right(&ec);
-            }
-            if(key == 68) {
-                valid = move_gap_cursor_left(&gb);
-                if(valid == 1)
-                    move_cursor_left(&ec);
-            }
-        } else if(inp == 127) {
-            int local_x, local_y;
-            getyx(stdscr, local_y, local_x);
-            if(local_x != 0) {
-                delete_char(&gb);
-                move_cursor_left(&ec);
-                move(get_cursor_y(&ec), get_cursor_x(&ec));
-            }
-        } else if(inp == 10) {
-            add_char(&gb, inp);
-            move_cursor_down_start(&ec);
-        } else if(inp == 23) {
-            char ans = 0;
-            clear();
-            print_buffer(&gb);
-            want_to_save(win, &ec);
-            ans = getch();
-            while(1) {
-                if(ans == 'y' || ans == 'Y' || ans == 'n' || ans == 'N')
-                    break;
-                ans = getch();
-            }
-            printw("%c", ans);
-            if(ans == 'y' || ans == 'Y')
-                save_buffer_to_file(&gb, fp);
-            getch();
-            delwin(win);
-            endwin();
-            fclose(fp);
-            return 1;
-        } else if(inp == 2) {
-            char ans;
-            clear();
-            print_buffer(&gb);
-            want_to_save(win, &ec);
-            ans = getch();
-            while(1) {
-                if(ans == 'y' || ans == 'Y' || ans == 'n' || ans == 'N')
-                    break;
-                ans = getch();
-            }
-            printw("%c", ans);
-            if(ans == 'y' || ans == 'Y')
-                save_buffer_to_file(&gb, fp);
-            move(get_cursor_y(&ec), get_cursor_x(&ec));
-        } else if(inp == 12) {
-            copy_line(&gb);
+            // }
         } else {
-            add_char(&gb, inp);
-            move_gap_cursor_right(&gb);
             move_cursor_right(&ec);
+            add_char(&eb, inp);
+            move_buffer_cursor_right(&eb);
         }
         clear();
-        print_buffer(&gb);
-        print_option_bar(win, &ec);
+        print_ebuffer(&eb);
+        // print_option_bar(stdscr, &ec);
         move(get_cursor_y(&ec), get_cursor_x(&ec));
-        wrefresh(win);
+        wrefresh(stdscr);
         refresh();
 
     }
