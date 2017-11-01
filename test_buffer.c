@@ -4,9 +4,17 @@
 int main(int argc, char const *argv[])
 {
     FILE *f = fopen(argv[1], "r");
-    FILE *f1 = fopen("test_op", "w");
     ebuffer eb;
     init_ebuffer(&eb, f);
+    fclose(f);
+    FILE *f1 = fopen("test_op", "w");
+    initscr();
+    cbreak();
+    noecho();
+    keypad(stdscr, TRUE);
+    wrefresh(stdscr);
+    refresh();
+
     // move_gap_cursor_right(&eb);
     // move_gap_cursor_down(&eb);
     move_gap_cursor_down(&eb);
@@ -22,8 +30,12 @@ int main(int argc, char const *argv[])
     // add_char(&eb, 's');
     // delete_char(&eb);
     print_ebuffer(&eb);
+    move(0, 0);
+    refresh();
     save_ebuffer_to_file(&eb, f1);
-    fclose(f);
+    getch();
+    endwin();
+
     fclose(f1);
     return 0;
 }

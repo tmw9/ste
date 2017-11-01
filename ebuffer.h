@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <ncurses.h>
 #include <string.h>
-#include "editor_config.h"
 
 #define GAP_SIZE 64
 
@@ -23,7 +22,7 @@ typedef struct row {
 } row;
 
 typedef struct ebuffer {
-    row *row_start, *row_end, *current_row, *copied_row;
+    row *row_start, *row_end, *current_row, *copied_row, *print_start, *print_end;
     int current_line_no;
 } ebuffer;
 
@@ -32,7 +31,7 @@ void copy_files_to_ebuffer(ebuffer *eb, FILE *file);
 row *get_new_row();
 void init_gap_buffer(gap_buffer *gb, unsigned long size);
 void copy_file_to_gap_buffer(gap_buffer *gb, char *str);
-void print_ebuffer(ebuffer *eb);
+void print_ebuffer(ebuffer *eb, int max_y, int new_lines);
 void print_gap_buffer(gap_buffer *gb);
 void save_ebuffer_to_file(ebuffer *eb, FILE *file);
 void save_gap_buffer_to_file(gap_buffer *gb, FILE *file);
@@ -52,5 +51,9 @@ int move_gap_cursor_up(ebuffer *eb);
 int cut_line(ebuffer *eb);
 int copy_line(ebuffer *eb);
 void find_str(ebuffer *eb, char *str);
+int move_gap_enter_key(ebuffer *eb);
+int add_string_to_ebuffer(ebuffer *eb, char *str);
+int get_spanning_rows(ebuffer *eb);
+void paste_row(ebuffer *eb);
 
 #endif

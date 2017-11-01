@@ -13,6 +13,7 @@ void init_ebuffer(ebuffer *eb, FILE *file) {
     eb -> current_row = eb -> row_start;
     eb -> current_row -> gb -> cursor_ptr = eb -> current_row -> gb -> buffer;
     eb -> current_line_no = eb -> current_row -> row_no;
+    eb -> print_start = eb -> row_start;
 }
 
 void copy_files_to_ebuffer(ebuffer *eb, FILE *file) {
@@ -31,10 +32,18 @@ void copy_files_to_ebuffer(ebuffer *eb, FILE *file) {
             eb -> row_end -> next = new_row;
             eb -> row_end = new_row;
         }
-        eb -> current_row -> gb = (gap_buffer *) malloc(sizeof(gap_buffer));
+        // eb -> current_row -> gb = (gap_buffer *) malloc(sizeof(gap_buffer));
         init_gap_buffer(eb -> current_row -> gb, strlen(str) + GAP_SIZE);
         copy_file_to_gap_buffer(eb -> current_row -> gb, str);
         eb -> current_row -> no_of_chars = strlen(str);
+    }
+    if(eb -> row_start == NULL) {
+        row *new_row = get_new_row();
+        new_row -> prev = new_row -> next = NULL;
+        eb -> current_row = new_row;
+        eb -> row_start = eb -> row_end = eb -> current_row;
+        new_row -> no_of_chars = 0;
+        eb -> current_line_no = 1;
     }
 }
 
@@ -93,7 +102,7 @@ void move_gap_to_point(gap_buffer *gb) {
 
 void expand_gap(gap_buffer *gb, unsigned long size) {
     if (size > size_of_gap(gb)) {
-        size += GAP_SIZE;
+        size += 1;
         expand_buffer(gb, size);
         move_chars_to_gap(gb, gb -> gap_end + size, gb -> gap_end, gb -> buffer_end - gb -> gap_end);
         gb -> gap_end += size;
@@ -146,23 +155,36 @@ void add_char_to_gap_buffer(gap_buffer *gb, char ch) {
     if (gb -> cursor_ptr != gb -> gap_start)
         move_gap_to_point(gb);
     if (gb -> gap_start == gb -> gap_end)
-        expand_gap(gb, 1);
+        expand_gap(gb, GAP_SIZE);
     *(gb -> gap_start) = ch;
     (gb -> gap_start)++;
     (gb -> cursor_ptr)++;
 }
 
-void print_ebuffer(ebuffer *eb) {
-    int y, x;
-    row *r = eb -> row_start;
-    while(r != NULL) {
+int add_string_to_ebuffer(ebuffer *eb, char *str) {
+    int i = 0;
+    while(str[i] != '\0') {
+        add_char(eb, str[i]);
+        i++;
+    }
+}
+
+void print_ebuffer(ebuffer *eb, int max_y, int new_line) {
+    int y, x, temp = 0;
+    row *r;
+    if(new_line)
+        eb -> print_start = eb -> print_start -> next;
+    r = eb -> print_start;
+    while(r != NULL && temp < max_y) {
         getmaxyx(stdscr, y, x);
         r -> spanning_terminal_rows = r -> no_of_chars / x + 1;
-        printf("ROW NO : %d  ", r -> row_no);
-        printf("SPANNING ROWS : %d  \n", r -> spanning_terminal_rows);
+        // printw("ROW NO : %d  ", r -> row_no);
+        // printw("SPANNING ROWS : %d  \n", r -> spanning_terminal_rows);
+        temp += r -> spanning_terminal_rows;
         print_gap_buffer(r -> gb);
         r = r -> next;
     }
+    eb -> print_end = r;
     // printf("CURRENT LINE NUMBER : %d\n", eb -> current_line_no);
 }
 
@@ -170,13 +192,13 @@ void print_gap_buffer(gap_buffer *gb) {
     char *temp = gb -> buffer;
     while (temp < gb -> buffer_end) {
         // if(temp >= gb -> gap_start && temp < gb -> gap_end)
-        //     printf("_");
+        //     printw("_");
         if (temp < gb -> gap_start || temp >= gb -> gap_end)
-            printf("%c",*(temp));
+            printw("%c",*(temp));
         ++temp;
     }
     // printf("%s", gb -> buffer);
-    printf("\n");
+    printw("\n");
 }
 
 void save_ebuffer_to_file(ebuffer *eb, FILE *file) {
@@ -189,6 +211,10 @@ void save_ebuffer_to_file(ebuffer *eb, FILE *file) {
 
 void save_gap_buffer_to_file(gap_buffer *gb, FILE *file) {
     char *temp = gb -> buffer;
+    if(temp == NULL) {
+        fputc('\n', file);
+        return;
+    }
     while(*temp) {
         if(temp == gb -> gap_start)
             temp = gb -> gap_end;
@@ -201,6 +227,7 @@ void save_gap_buffer_to_file(gap_buffer *gb, FILE *file) {
 int move_gap_cursor_right(ebuffer *eb) {
     row *current_row = eb -> current_row;
     gap_buffer *gb = current_row -> gb;
+
     if(gb -> cursor_ptr >= gb -> gap_start && gb -> cursor_ptr < gb -> gap_end) {
         gb -> cursor_ptr = gb -> gap_end;
     }
@@ -215,8 +242,10 @@ int move_gap_cursor_right(ebuffer *eb) {
 
 
 int move_gap_cursor_left(ebuffer *eb) {
+
     row *current_row = eb -> current_row;
     gap_buffer *gb = current_row -> gb;
+
     char *temp = gb -> cursor_ptr;
     if(gb -> cursor_ptr == gb -> buffer) {
         return 0;
@@ -230,9 +259,11 @@ int move_gap_cursor_left(ebuffer *eb) {
 }
 
 int move_gap_cursor_down(ebuffer *eb) {
+
     row *current_row = eb -> current_row;
+    gap_buffer *gb = current_row -> gb;
     if(current_row -> next == NULL)
-        return 0;
+        return -1;
     int x = 0;
     char *temp = current_row -> gb -> cursor_ptr;
     while(temp != current_row -> gb -> buffer) {
@@ -246,18 +277,21 @@ int move_gap_cursor_down(ebuffer *eb) {
     eb -> current_row = current_row;
     if(current_row -> no_of_chars < x) {
         current_row -> gb -> cursor_ptr = current_row -> gb -> buffer_end;
-        return 2;
+        return current_row -> no_of_chars;
     }
     current_row -> gb -> cursor_ptr = current_row -> gb -> buffer + x;
     if(current_row -> gb -> cursor_ptr >= current_row -> gb -> gap_start && current_row -> gb -> cursor_ptr < current_row -> gb -> gap_end)
         current_row -> gb -> cursor_ptr += current_row -> gb -> cursor_ptr - current_row -> gb -> gap_start;
-    return 1;
+    return x;
 }
 
 int move_gap_cursor_up(ebuffer *eb) {
+
+
     row *current_row = eb -> current_row;
     gap_buffer *gb = current_row -> gb;
     char *temp = gb -> cursor_ptr;
+
     int x = 0;
 
     //check if previous row exists
@@ -277,12 +311,12 @@ int move_gap_cursor_up(ebuffer *eb) {
     temp = gb -> buffer;
     if(current_row -> no_of_chars < x) {
         gb -> cursor_ptr = gb -> buffer_end;
-        return 2;
+        return current_row -> no_of_chars;
     }
     gb -> cursor_ptr = gb -> buffer + x;
     if(gb -> cursor_ptr >= gb -> gap_start && gb -> cursor_ptr < gb -> gap_end)
         gb -> cursor_ptr += gb -> cursor_ptr - gb -> gap_start;
-    return 1;
+    return x;
 }
 
 
@@ -291,8 +325,9 @@ int delete_char(ebuffer *eb) {
     gap_buffer *gb = current_row -> gb;
     if(gb -> cursor_ptr == gb -> buffer)
         return 0;
-    if(gb -> cursor_ptr >= gb -> gap_start && gb -> gap_end)
-        gb -> cursor_ptr = gb -> gap_start - 1;
+    move_gap_to_point(eb -> current_row -> gb);
+    // if(gb -> cursor_ptr >= gb -> gap_start && gb -> gap_end)
+    //     gb -> cursor_ptr = gb -> gap_start;
     (gb -> cursor_ptr)--;
     (gb -> gap_start)--;
     return 1;
@@ -336,7 +371,167 @@ int cut_line(ebuffer *eb) {
 int copy_line(ebuffer *eb) {
     if(eb -> current_row == NULL)
         return 0;
-    eb -> copied_row = eb -> current_row;
+    // eb -> copied_row = copy_complete_row(eb -> current_row);
+}
+
+// row *copy_complete_row(row *current_row) {
+//     row *new_row = (row *)malloc(sizeof(row));
+//     new_row -> gb = (gap_buffer *)malloc(sizeof(gap_buffer));
+//     new_row -> row_no = current_row -> row_no;
+//     new_row -> no_of_chars = current_row -> no_of_chars;
+//     new_row -> spanning_terminal_rows - current_row -> spanning_terminal_rows;
+//     new_row -> prev = current_row -> prev;
+//     new_row -> next = current_row -> next;
+//     copy_gap_buffer(new_row -> gb, current_row -> gb);
+// }
+
+// void copy_gap_buffer(gap_buffer *new, gap_buffer *current) {
+//     new -> buffer = (char *)malloc(current -> buffer_end - current -> buffer + 1);
+
+// }
+
+/*
+    row start not yet moved make sure
+    make sure it works
+    make sure it works
+*/
+int move_gap_enter_key(ebuffer *eb) {
+    row *new_row = get_new_row(), *current_row = eb -> current_row;
+    new_row -> no_of_chars = 0;
+    gap_buffer *current_gb = current_row -> gb, *new_gb = new_row -> gb;
+
+    //
+    if(current_gb -> cursor_ptr >= current_gb -> gap_start && current_gb -> cursor_ptr < current_gb -> gap_end)
+        current_gb -> cursor_ptr = current_gb -> gap_end;
+    //
+    // if(current_gb -> cursor_ptr == current_gb -> buffer) {
+    //     new_row -> next = eb -> current_row;
+    //     new_row -> prev = eb -> current_row -> prev;
+    //     eb -> current_row -> prev = new_row;
+    //     if(eb -> row_start == eb -> current_row);
+    //         eb -> row_start = new_row;
+    //     eb -> current_row = new_row;
+    //     return 0;
+    // }
+    if(current_gb -> cursor_ptr == current_gb -> buffer_end) {
+    // else {
+        new_row -> row_no = current_row -> row_no + 1;
+        new_row -> prev = current_row;
+        new_row -> next = current_row -> next;
+        current_row -> next = new_row;
+        eb -> current_row = new_row;
+        if(eb -> row_end == current_row)
+            eb -> row_end = current_row -> next;
+        // change all next row numbers
+        row *rows = new_row -> next;
+        while(rows != NULL) {
+            rows -> row_no = rows -> row_no + 1;
+            rows = rows -> next;
+        }
+        //
+        return 0;
+    } else {
+        //
+        char *str = (char *) malloc(current_gb -> buffer_end - current_gb -> cursor_ptr + 1);
+        //
+        char *temp;
+        int i = 0;
+
+        if(current_gb -> gap_start < current_gb -> cursor_ptr) {
+
+            //copying code
+            temp = current_gb -> cursor_ptr;
+            while(temp <= current_gb -> buffer_end) {
+                str[i] = *(temp);
+                ++temp;
+                ++i;
+            }
+            str[i] = '\0';
+            //copying code ends
+
+            current_gb -> buffer_end = current_gb -> cursor_ptr;
+
+
+            //inserting new row with str
+            eb -> current_row = new_row;
+            add_string_to_ebuffer(eb, str);
+            new_row -> row_no = current_row -> row_no + 1;
+            new_row -> prev = current_row;
+            new_row -> next = current_row -> next;
+            current_row -> next = new_row;
+
+            // change all next row numbers
+            row *rows = new_row -> next;
+            while(rows != NULL) {
+                rows -> row_no = rows -> row_no + 1;
+                rows = rows -> next;
+            }
+            //
+
+            //move cursort ptr of gap of current row to start
+            eb -> current_row -> gb -> cursor_ptr = eb -> current_row -> gb -> buffer;
+
+        }
+        else {
+            // current_gb -> cursor_ptr = current_gb -> buffer;
+            move_gap_to_point(current_gb);
+            if(current_gb -> cursor_ptr >= current_gb -> gap_start && current_gb -> cursor_ptr < current_gb -> gap_end)
+                current_gb -> cursor_ptr = current_gb -> gap_end;
+
+            //copying code
+            temp = current_gb -> cursor_ptr;
+            while(temp <= current_gb -> buffer_end) {
+                str[i] = *(temp);
+                ++temp;
+                ++i;
+            }
+            str[i] = '\0';
+            //copying code ends
+
+            //current buffer is ended
+            temp = current_gb -> cursor_ptr;
+            current_gb -> cursor_ptr = temp;
+            current_gb -> buffer_end = temp;
+
+            //inserting new row with str
+            eb -> current_row = new_row;
+            add_string_to_ebuffer(eb, str);
+            new_row -> row_no = current_row -> row_no + 1;
+            new_row -> prev = current_row;
+            new_row -> next = current_row -> next;
+            current_row -> next = new_row;
+
+            // change all next row numbers
+            row *rows = new_row -> next;
+            while(rows != NULL) {
+                rows -> row_no = rows -> row_no + 1;
+                rows = rows -> next;
+            }
+            //
+
+
+            //move cursort ptr of gap of current row to start
+            eb -> current_row -> gb -> cursor_ptr = eb -> current_row -> gb -> buffer;
+        }
+    }
+}
+
+int get_spanning_rows(ebuffer *eb) {
+    return eb -> current_row -> prev -> spanning_terminal_rows;
+}
+
+void paste_row(ebuffer *eb) {
+    if(eb -> copied_row == NULL)
+        return;
+    row *r = eb -> current_row;
+    eb -> copied_row -> next = r -> next;
+    eb -> copied_row -> prev = r;
+    r -> next = eb -> copied_row;
+    r = r -> next;
+    while(r != NULL) {
+        r -> row_no = r -> prev -> row_no + 1;
+        r = r -> next;
+    }
 }
 
 // void find_str(ebuffer *eb, char *str) {
