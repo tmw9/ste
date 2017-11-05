@@ -39,7 +39,7 @@ int main(int argc, char const *argv[])
         fp = fopen("__temp", "ab+");
         no_file = 1;
     }else {
-        fp = fopen(argv[1], "w+");
+        fp = fopen(argv[1], "r+");
     }
     init_ebuffer(&eb, fp);
     print_ebuffer(&eb, get_max_size_y(&ec), 0);
