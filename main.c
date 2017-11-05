@@ -25,24 +25,22 @@ void init_editor() {
 int main(int argc, char const *argv[])
 {
     char next_char = 0, no_file = 0;
-    int inp;
-    char save = 0;
+    int inp, i = 0;
+    char save = 0, filename[100];
     int local_x, local_y, new_line = 0;
     ebuffer eb;
     editor_config ec;
     FILE *fp;
     int temp = 0, valid = 0;
     noecho();
-    if(argc != 2) {
-        printf("Usage : ./main <filename>\n");
-        return -1;
-    }
-    fp = fopen(argv[1], "r+");
-    if(fp == NULL) {
-        no_file = 1;
-    }
     init_editor();
     init_editor_config(&ec, stdscr);
+    if(argc < 2) {
+        fp = fopen("__temp", "ab+");
+        no_file = 1;
+    }else {
+        fp = fopen(argv[1], "w+");
+    }
     init_ebuffer(&eb, fp);
     print_ebuffer(&eb, get_max_size_y(&ec), 0);
     move(0, 0);
@@ -78,13 +76,44 @@ int main(int argc, char const *argv[])
         } else if(inp == CTRLB) {
             rewind(fp);
             save_ebuffer_to_file(&eb, fp);
+            if(no_file == 1) {
+                clear();
+                printw("Enter File Name : ");
+                while((save = getch()) != '\n'){
+                    printw("%c", filename[i]);
+                    filename[i++] = save;
+                }
+
+                filename[i] = '\0';
+                rename("__temp", filename);
+                no_file = 0;
+                fclose(fp);
+                fp = fopen(filename, "r+");
+            }
         } else if(inp == CTRLW) {
             clear();
             printw("Do you want to save : \n");
             save = getch();
             if(save == 'y' || save == 'Y') {
+                if(no_file == 1) {
+                    clear();
+                    printw("Enter File Name : ");
+                    while((save = getch()) != '\n') {
+                        printw("%c", save);
+                        filename[i++] = save;
+                    }
+                    filename[i] = '\0';
+                    rename("__temp", filename);
+                    no_file = 0;
+                    fclose(fp);
+                    fp = fopen(filename, "r+");
+                }
                 rewind(fp);
                 save_ebuffer_to_file(&eb, fp);
+            } else if(no_file == 1) {
+                endwin();
+                remove("__temp");
+                return 0;
             }
             break;
         } else if(inp == CTRLX) {

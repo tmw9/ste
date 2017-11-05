@@ -202,6 +202,7 @@ void print_gap_buffer(gap_buffer *gb) {
 }
 
 void save_ebuffer_to_file(ebuffer *eb, FILE *file) {
+    rewind(file);
     row *r = eb -> row_start;
     while(r != NULL) {
         save_gap_buffer_to_file(r -> gb, file);

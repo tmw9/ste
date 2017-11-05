@@ -1,0 +1,4 @@
+1. GAP BUFFER : https://github.com/lazyhacker/gapbuffer/blob/master/gap_buffer.cpp
+    Refered gap buffer from github
+2. NCURSES : http://tldp.org/HOWTO/NCURSES-Programming-HOWTO/
+    How-to tutorials of ncurses from tldp.org
